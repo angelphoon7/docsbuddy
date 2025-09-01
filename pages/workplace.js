@@ -50,33 +50,55 @@ export default function Workplace() {
       timestamp: new Date(),
     };
 
+    const currentInput = inputValue;
     setMessages(prev => [...prev, userMessage]);
     setInputValue("");
     setIsLoading(true);
 
-    // Simulate AI response
-    setTimeout(() => {
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: currentInput,
+          conversationHistory: messages
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to get AI response');
+      }
+
+      const data = await response.json();
+      
       const aiResponse = {
         id: messages.length + 2,
         role: "assistant",
-        content: generateAIResponse(inputValue),
+        content: data.response,
         timestamp: new Date(),
       };
+      
       setMessages(prev => [...prev, aiResponse]);
+    } catch (error) {
+      console.error('Error getting AI response:', error);
+      
+      const errorMessage = {
+        id: messages.length + 2,
+        role: "assistant",
+        content: `Sorry, I encountered an error: ${error.message}. Please try again.`,
+        timestamp: new Date(),
+      };
+      
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
-  const generateAIResponse = (userInput) => {
-    const responses = [
-      "I'll help you create comprehensive documentation for that. Let me analyze your requirements and suggest the best approach.",
-      "That's a great documentation challenge! Here's how we can structure this effectively...",
-      "I can help you improve that documentation. Let me provide some suggestions and examples.",
-      "Perfect! Let's break this down into clear, actionable steps for better documentation.",
-      "I understand what you're looking for. Here's a detailed approach to create effective documentation for this."
-    ];
-    return responses[Math.floor(Math.random() * responses.length)];
-  };
+
 
   const createNewConversation = () => {
     const newId = conversations.length + 1;
