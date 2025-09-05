@@ -1,5 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
+import { performAIResponseLookup } from "../utils/aiResponseLookup";
+import LookupResults from "../components/LookupResults";
+import ContextualLookup from "../lookup/components/ContextualLookup";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,17 +20,25 @@ export default function Workplace() {
       id: 1,
       role: "assistant",
       content: "Hello! I'm your AI documentation assistant. I can help you create, improve, and maintain technical documentation. What would you like to work on today?",
-      timestamp: new Date(),
+      timestamp: null, // Will be set on client-side
     }
   ]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [conversations, setConversations] = useState([
-    { id: 1, title: "API Documentation", lastMessage: "Help me document my REST API", timestamp: new Date() },
-    { id: 2, title: "User Guide", lastMessage: "Create a user guide for our mobile app", timestamp: new Date(Date.now() - 86400000) },
+    { id: 1, title: "API Documentation", lastMessage: "Help me document my REST API", timestamp: null },
+    { id: 2, title: "User Guide", lastMessage: "Create a user guide for our mobile app", timestamp: null },
   ]);
+  const [mounted, setMounted] = useState(false);
   const [activeConversation, setActiveConversation] = useState(1);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [lookupResults, setLookupResults] = useState({});
+  const [showLookupResults, setShowLookupResults] = useState({});
+  const [contextualLookup, setContextualLookup] = useState({
+    isVisible: false,
+    selectedText: '',
+    position: { x: 0, y: 0 }
+  });
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -36,9 +47,139 @@ export default function Workplace() {
   };
 
   useEffect(() => {
+    setMounted(true);
+    // Set timestamps on client-side to avoid hydration issues
+    setMessages(prev => prev.map(msg => ({
+      ...msg,
+      timestamp: msg.timestamp || new Date()
+    })));
+    setConversations(prev => prev.map((conv, index) => ({
+      ...conv,
+      timestamp: conv.timestamp || new Date(Date.now() - (index * 86400000))
+    })));
+  }, []);
+
+  useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
+  // Global text selection listener
+  useEffect(() => {
+    const handleGlobalSelection = () => {
+      const selection = window.getSelection();
+      const selectedText = selection.toString().trim();
+      
+      if (selectedText.length === 0) {
+        // Add a small delay to prevent flickering
+        setTimeout(() => {
+          setContextualLookup(prev => ({ ...prev, isVisible: false }));
+        }, 100);
+      }
+    };
+
+    // Add click outside listener to close popup
+    const handleClickOutside = (event) => {
+      const popup = document.querySelector('[data-lookup-popup]');
+      if (popup && !popup.contains(event.target)) {
+        setContextualLookup(prev => ({ ...prev, isVisible: false }));
+      }
+    };
+
+    // Add selection change listener that works after mouse release
+    const handleSelectionChange = () => {
+      const selection = window.getSelection();
+      const selectedText = selection.toString().trim();
+      
+      // Count words instead of characters
+      const wordCount = selectedText.split(/\s+/).filter(word => word.length > 0).length;
+      
+      if (selectedText.length > 0 && wordCount <= 50) {
+        try {
+          const range = selection.getRangeAt(0);
+          const rect = range.getBoundingClientRect();
+          
+          // Only show popup if we have valid coordinates
+          if (rect.width > 0 && rect.height > 0) {
+            let x = rect.left + window.scrollX;
+            let y = rect.bottom + window.scrollY;
+            
+            // Ensure popup doesn't go off-screen
+            if (x + 320 > window.innerWidth) {
+              x = window.innerWidth - 340;
+            }
+            if (y + 400 > window.innerHeight + window.scrollY) {
+              y = rect.top + window.scrollY - 420;
+            }
+            
+            x = Math.max(10, x);
+            y = Math.max(10, y);
+            
+            setContextualLookup({
+              isVisible: true,
+              selectedText: selectedText,
+              position: { x, y }
+            });
+          }
+        } catch (error) {
+          console.log('Selection change handler error:', error);
+        }
+      }
+    };
+
+    // Add mouse up listener to handle text selection after mouse release
+    const handleMouseUp = () => {
+      setTimeout(() => {
+        const selection = window.getSelection();
+        const selectedText = selection.toString().trim();
+        
+        // Count words instead of characters
+        const wordCount = selectedText.split(/\s+/).filter(word => word.length > 0).length;
+        
+        if (selectedText.length > 0 && wordCount <= 50) {
+          try {
+            const range = selection.getRangeAt(0);
+            const rect = range.getBoundingClientRect();
+            
+            if (rect.width > 0 && rect.height > 0) {
+              let x = rect.left + window.scrollX;
+              let y = rect.bottom + window.scrollY;
+              
+              // Ensure popup doesn't go off-screen
+              if (x + 320 > window.innerWidth) {
+                x = window.innerWidth - 340;
+              }
+              if (y + 400 > window.innerHeight + window.scrollY) {
+                y = rect.top + window.scrollY - 420;
+              }
+              
+              x = Math.max(10, x);
+              y = Math.max(10, y);
+              
+              setContextualLookup({
+                isVisible: true,
+                selectedText: selectedText,
+                position: { x, y }
+              });
+            }
+          } catch (error) {
+            console.log('Mouse up handler error:', error);
+          }
+        }
+      }, 100); // Small delay to ensure selection is complete
+    };
+
+    document.addEventListener('selectionchange', handleSelectionChange);
+    document.addEventListener('selectionchange', handleGlobalSelection);
+    document.addEventListener('click', handleClickOutside);
+    document.addEventListener('mouseup', handleMouseUp);
+    
+    return () => {
+      document.removeEventListener('selectionchange', handleSelectionChange);
+      document.removeEventListener('selectionchange', handleGlobalSelection);
+      document.removeEventListener('click', handleClickOutside);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, []);
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!inputValue.trim() || isLoading) return;
@@ -82,6 +223,30 @@ export default function Workplace() {
       };
       
       setMessages(prev => [...prev, aiResponse]);
+      
+      // Perform AI response lookup
+      try {
+        const lookupData = await performAIResponseLookup(
+          data.response,
+          currentInput,
+          messages
+        );
+        
+        setLookupResults(prev => ({
+          ...prev,
+          [aiResponse.id]: lookupData
+        }));
+        
+        // Automatically show lookup results for responses with insights
+        if (lookupData.insights && lookupData.insights.length > 0) {
+          setShowLookupResults(prev => ({
+            ...prev,
+            [aiResponse.id]: true
+          }));
+        }
+      } catch (error) {
+        console.error('Error performing lookup:', error);
+      }
     } catch (error) {
       console.error('Error getting AI response:', error);
       
@@ -136,6 +301,35 @@ export default function Workplace() {
     return messageDate.toLocaleDateString();
   };
 
+  // Handle text selection for contextual lookup
+  const handleTextSelection = (event) => {
+    const selection = window.getSelection();
+    const selectedText = selection.toString().trim();
+    
+    // Count words instead of characters
+    const wordCount = selectedText.split(/\s+/).filter(word => word.length > 0).length;
+    
+    if (selectedText.length > 0 && wordCount <= 50) {
+      const range = selection.getRangeAt(0);
+      const rect = range.getBoundingClientRect();
+      
+      setContextualLookup({
+        isVisible: true,
+        selectedText: selectedText,
+        position: {
+          x: rect.left + window.scrollX,
+          y: rect.bottom + window.scrollY
+        }
+      });
+    } else {
+      setContextualLookup(prev => ({ ...prev, isVisible: false }));
+    }
+  };
+
+  // Close contextual lookup
+  const closeContextualLookup = () => {
+    setContextualLookup(prev => ({ ...prev, isVisible: false }));
+  };
   return (
     <div className={`${geistSans.className} ${geistMono.className} font-sans h-screen bg-white dark:bg-slate-900 flex`}>
       {/* Sidebar */}
@@ -231,6 +425,27 @@ export default function Workplace() {
           </div>
           
           <div className="flex items-center space-x-2">
+            <button 
+              onClick={() => {
+                // Toggle lookup feature for all messages
+                const hasAnyLookups = Object.keys(lookupResults).length > 0;
+                if (hasAnyLookups) {
+                  setShowLookupResults(prev => {
+                    const newState = {};
+                    Object.keys(prev).forEach(key => {
+                      newState[key] = !prev[key];
+                    });
+                    return newState;
+                  });
+                }
+              }}
+              className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
+              title="Toggle AI Response Insights"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+            </button>
             <button className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
@@ -263,11 +478,47 @@ export default function Workplace() {
                       ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white'
                   }`}>
-                    <div className="whitespace-pre-wrap">{message.content}</div>
+                    <div 
+                      className="whitespace-pre-wrap cursor-text select-text"
+                      onMouseUp={handleTextSelection}
+                      onTouchEnd={handleTextSelection}
+                    >
+                      {message.content}
+                    </div>
                   </div>
                   <div className="text-xs text-slate-500 dark:text-slate-400">
                     {formatTime(message.timestamp)}
                   </div>
+                  
+                  {/* Lookup Results for AI messages */}
+                  {message.role === 'assistant' && lookupResults[message.id] && (
+                    <div className="mt-2">
+                      <button
+                        onClick={() => setShowLookupResults(prev => ({
+                          ...prev,
+                          [message.id]: !prev[message.id]
+                        }))}
+                        className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors flex items-center space-x-1"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>
+                        <span>
+                          {showLookupResults[message.id] ? 'Hide' : 'Show'} Insights 
+                          {lookupResults[message.id].insights?.length > 0 && ` (${lookupResults[message.id].insights.length})`}
+                        </span>
+                      </button>
+                      
+                      <LookupResults
+                        lookupData={lookupResults[message.id]}
+                        isVisible={showLookupResults[message.id]}
+                        onClose={() => setShowLookupResults(prev => ({
+                          ...prev,
+                          [message.id]: false
+                        }))}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -336,6 +587,14 @@ export default function Workplace() {
           </form>
         </div>
       </div>
+      
+      {/* Contextual Lookup Popup */}
+      <ContextualLookup
+        selectedText={contextualLookup.selectedText}
+        position={contextualLookup.position}
+        onClose={closeContextualLookup}
+        isVisible={contextualLookup.isVisible}
+      />
     </div>
   );
 }

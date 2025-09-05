@@ -1,40 +1,102 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# DocsBuddy - AI-Powered Documentation Assistant
 
-## Getting Started
+This is a [Next.js](https://nextjs.org) project that provides an AI-powered documentation assistant with advanced lookup features.
 
-First, run the development server:
+## 🚀 **Features**
 
+- **AI Chatbot**: Intelligent documentation assistance
+- **Contextual Lookup**: Select any text for instant definitions and analysis
+- **Sentence Analyzer**: AI-powered text analysis with different personalities
+- **Dictionary Integration**: Real-time word definitions and thesaurus
+- **Mobile Responsive**: Works perfectly on all devices
+
+## 🛠️ **Quick Setup**
+
+### **1. Install Dependencies**
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### **2. Create Environment File**
+Create a `.env.local` file in your project root:
+```bash
+# Main chatbot API key
+OPENAI_API_KEY=your_main_api_key_here
 
-You can start editing the page by modifying `pages/index.js`. The page auto-updates as you edit the file.
+# Lookup features API key (separate from main chatbot)
+LOOKUP_OPENAI_API_KEY=your_lookup_api_key_here
+```
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.js`.
+**Get your API keys from:** [OpenAI Platform](https://platform.openai.com/api-keys)
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
+### **3. Start Development Server**
+```bash
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Open [http://localhost:3000](http://localhost:3000) with your browser.
 
-## Learn More
+### **4. Test Lookup Feature**
+1. Go to `/workplace` page
+2. Select any text in an AI response
+3. Lookup popup should appear with dictionary, thesaurus, and AI analysis
 
-To learn more about Next.js, take a look at the following resources:
+## 🧪 **Testing**
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
+Test the lookup API functionality:
+```bash
+npm run test:lookup
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📁 **Project Structure**
 
-## Deploy on Vercel
+```
+├── pages/                    # Next.js pages and API routes
+│   ├── api/                  # API endpoints
+│   │   ├── chat.js          # Main chatbot API
+│   │   └── lookup/          # Lookup feature APIs
+│   ├── index.js             # Landing page
+│   └── workplace.js         # Main chat interface
+├── lookup/                   # Lookup feature package
+│   ├── components/          # React components
+│   └── utils/               # Utility functions
+├── components/              # Shared components
+└── utils/                   # Utility functions
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🌐 **Deployment**
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+### **Vercel (Recommended)**
+```bash
+npm run build
+npm run start
+```
+
+### **Environment Variables**
+Set these in your hosting platform:
+- `OPENAI_API_KEY`
+- `LOOKUP_OPENAI_API_KEY`
+
+## 📚 **Documentation**
+
+- **Lookup Feature**: See [lookup/README.md](lookup/README.md) for detailed setup
+- **Sentence Analyzer**: See [SENTENCE_ANALYZER_README.md](SENTENCE_ANALYZER_README.md)
+- **API Routes**: See [pages/api/](pages/api/) for endpoint documentation
+
+## 🔧 **Development**
+
+This project uses:
+- [Next.js](https://nextjs.org) - React framework
+- [Tailwind CSS](https://tailwindcss.com) - Styling
+- [OpenAI API](https://openai.com) - AI capabilities
+- [Geist Font](https://vercel.com/font) - Typography
+
+## 🚀 **Learn More**
+
+- [Next.js Documentation](https://nextjs.org/docs)
+- [OpenAI API Documentation](https://platform.openai.com/docs)
+- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
+
+---
+
+**DocsBuddy is now ready for production with fully functional lookup features!** 🎉
