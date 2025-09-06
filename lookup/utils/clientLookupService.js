@@ -59,96 +59,7 @@ function getTechnicalDefinition(term) {
   return technicalDefinitions[lowerTerm] || null;
 }
 
-// Fetch data from Dictionary API (client-side only)
-async function getDictionaryDefinition(term) {
-  try {
-    const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(term)}`, {
-      headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'DocsBuddy-Lookup/1.0'
-      },
-      mode: 'cors'
-    });
-    
-    if (!response.ok) {
-      console.log(`Dictionary API returned ${response.status}: ${response.statusText}`);
-      return null;
-    }
-    
-    const data = await response.json();
-    if (data && data[0]) {
-      const entry = data[0];
-      return {
-        word: entry.word,
-        pronunciation: entry.phonetic || 'N/A',
-        partOfSpeech: entry.meanings?.[0]?.partOfSpeech || 'noun',
-        definitions: entry.meanings?.[0]?.definitions?.map(def => def.definition) || ['No definition available'],
-        exampleUsage: entry.meanings?.[0]?.definitions?.[0]?.example || 'No example available',
-        synonyms: entry.meanings?.[0]?.definitions?.[0]?.synonyms?.slice(0, 5) || [],
-        resources: [
-          { title: 'Merriam-Webster', url: `https://www.merriam-webster.com/dictionary/${encodeURIComponent(term)}` },
-          { title: 'Oxford Dictionary', url: `https://www.oxfordlearnersdictionaries.com/definition/english/${encodeURIComponent(term)}` }
-        ]
-      };
-    }
-    return null;
-  } catch (error) {
-    if (error.name === 'AbortError') {
-      console.log('Dictionary API request timed out');
-    } else {
-      console.error('Error fetching dictionary definition:', error);
-    }
-    return null;
-  }
-}
-
-// Fetch Wikipedia summary (client-side only)
-async function getWikipediaSummary(term) {
-  try {
-    const response = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(term)}`, {
-      headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'DocsBuddy-Lookup/1.0'
-      },
-      mode: 'cors'
-    });
-    
-    if (!response.ok) {
-      console.log(`Wikipedia API returned ${response.status}: ${response.statusText}`);
-      return null;
-    }
-    
-    const data = await response.json();
-    if (data.extract) {
-      return {
-        title: data.title,
-        extract: data.extract,
-        url: data.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${encodeURIComponent(term)}`
-      };
-    }
-    return null;
-  } catch (error) {
-    console.log('Wikipedia lookup failed:', error.message);
-    return null;
-  }
-}
-
-// Get related terms
-async function getRelatedTerms(term) {
-  // Simple related terms based on the word
-  const relatedTerms = [];
-  const lowerTerm = term.toLowerCase();
-  
-  if (lowerTerm.includes('api')) {
-    relatedTerms.push('endpoint', 'rest', 'graphql', 'authentication', 'authorization');
-  } else if (lowerTerm.includes('function')) {
-    relatedTerms.push('method', 'procedure', 'callback', 'closure', 'parameter');
-  } else if (lowerTerm.includes('database')) {
-    relatedTerms.push('query', 'table', 'index', 'transaction', 'schema');
-  }
-  
-  return relatedTerms;
-}
+// These functions are no longer needed as the API route handles all the logic
 
 // Check AI API status (client-side)
 function checkAIAPIStatus() {
@@ -170,43 +81,25 @@ export async function getComprehensiveLookup(term) {
       throw new Error('This function should only be called on the client-side');
     }
 
-    // Check AI API status
-    const aiStatus = checkAIAPIStatus();
+    // Use the API route which handles all the logic server-side
+    const response = await fetch('/api/lookup/definition', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ term })
+    });
     
-    // First try to get technical definition
-    let result = await getTechnicalDefinition(term);
-    
-    // If no technical definition, try dictionary API
-    if (!result) {
-      result = await getDictionaryDefinition(term);
+    if (!response.ok) {
+      console.log(`API route returned ${response.status}: ${response.statusText}`);
+      // Return fallback data if API fails
+      const fallbackData = generateFallbackLookupData(term);
+      fallbackData.aiStatus = checkAIAPIStatus();
+      return fallbackData;
     }
     
-    // If still no result, use fallback data
-    if (!result) {
-      result = generateFallbackLookupData(term);
-    }
-    
-    // Add AI status information
-    result.aiStatus = aiStatus;
-    
-    // Add Wikipedia data if available (don't wait too long)
-    try {
-      const wikiData = await Promise.race([
-        getWikipediaSummary(term),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000))
-      ]);
-      if (wikiData) {
-        result.wikipedia = wikiData;
-      }
-    } catch (wikiError) {
-      // Silently fail for Wikipedia - not critical
-      console.log('Wikipedia lookup failed:', wikiError.message);
-    }
-    
-    // Add related terms
-    result.relatedTerms = await getRelatedTerms(term);
-    
-    return result;
+    const data = await response.json();
+    return data;
   } catch (error) {
     console.error('Error in comprehensive lookup:', error);
     // Return fallback data with AI status
