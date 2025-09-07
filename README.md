@@ -1,101 +1,113 @@
-# DocsBuddy - AI-Powered Documentation Assistant
+ ## 💥 **DocsBuddy**
+ 
+ 
+ <img width="489" height="340" alt="image" src="https://github.com/user-attachments/assets/f6ebf033-49ea-48da-97b3-ae0902382f9f" />
 
-This is a [Next.js](https://nextjs.org) project that provides an AI-powered documentation assistant with advanced lookup features.
 
-## 🚀 **Features**
+DocsBuddy is an AI-powered documentation assistant designed to help developers create, improve, and maintain technical documentation effortlessly. With its intuitive features and support for various documentation formats, DocsBuddy streamlines the process of technical writing.
 
-- **AI Chatbot**: Intelligent documentation assistance
-- **Contextual Lookup**: Select any text for instant definitions and analysis
-- **Sentence Analyzer**: AI-powered text analysis with different personalities
+
+## 🛠️ **Tracks and Problem Statements**
+
+Tracks : Industry Collaboration (Ifast)
+
+Problem Statements: 
+1. Simplify Writing ✍️
+2. Speed Up Reading 📖
+3. Make Maintenance Easy 🧱
+
+
+
+## 🚀 **Solutions and Features**
+
+  Current features
+  
+- **Smart Doc Generator**: Generate markdown docs from GitHub links, files or comments with suggested templates
+- **AI Summarizer**:Condense long docs into concise summaries with copy & edit options instantly
+- **Workflow Visualizer**: Auto-generate workflow and process diagrams from project links
+- **Contextual Lookup**: Highlight text to get instant definitions, references, or explanations
+- **Code Quality Analyzer**: AI-powered checks for code style, errors, and best practices
 - **Dictionary Integration**: Real-time word definitions and thesaurus
+- **Test Assistant**：Suggest and validate test cases for your code automatically
 - **Mobile Responsive**: Works perfectly on all devices
 
-## 🛠️ **Quick Setup**
 
-### **1. Install Dependencies**
-```bash
-npm install
-```
 
-### **2. Create Environment File**
-Create a `.env.local` file in your project root:
-```bash
-# Main chatbot API key
-OPENAI_API_KEY=your_main_api_key_here
+Next phase features
 
-# Lookup features use the same API key as main chatbot
-# OPENAI_API_KEY=your_api_key_here
-```
-
-**Get your API key from:** [OpenAI Platform](https://platform.openai.com/api-keys)
-
-### **3. Start Development Server**
-```bash
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser.
-
-### **4. Test Lookup Feature**
-1. Go to `/workplace` page
-2. Select any text in an AI response
-3. Lookup popup should appear with dictionary, thesaurus, and AI analysis
-
-## 🧪 **Testing**
-
-Test the lookup API functionality:
-```bash
-npm run test:lookup
-```
-
-## 📁 **Project Structure**
-
-```
-├── pages/                    # Next.js pages and API routes
-│   ├── api/                  # API endpoints
-│   │   ├── chat.js          # Main chatbot API
-│   │   └── lookup/          # Lookup feature APIs
-│   ├── index.js             # Landing page
-│   └── workplace.js         # Main chat interface
-├── lookup/                   # Lookup feature package
-│   ├── components/          # React components
-│   └── utils/               # Utility functions
-├── components/              # Shared components
-└── utils/                   # Utility functions
-```
-
-## 🌐 **Deployment**
-
-### **Vercel (Recommended)**
-```bash
-npm run build
-npm run start
-```
-
-### **Environment Variables**
-Set this in your hosting platform:
-- `OPENAI_API_KEY`
-
-## 📚 **Documentation**
-
-- **Lookup Feature**: See [lookup/README.md](lookup/README.md) for detailed setup
-- **Sentence Analyzer**: See [SENTENCE_ANALYZER_README.md](SENTENCE_ANALYZER_README.md)
-- **API Routes**: See [pages/api/](pages/api/) for endpoint documentation
+- **Github Actions**: Generate changelog, run automatically on every push
+- **vis.js**: Visualize timeline of changelog
 
 ## 🔧 **Development**
 
 This project uses:
-- [Next.js](https://nextjs.org) - React framework
-- [Tailwind CSS](https://tailwindcss.com) - Styling
-- [OpenAI API](https://openai.com) - AI capabilities
-- [Geist Font](https://vercel.com/font) - Typography
 
-## 🚀 **Learn More**
 
-- [Next.js Documentation](https://nextjs.org/docs)
-- [OpenAI API Documentation](https://platform.openai.com/docs)
-- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
+-**Languages/Runtime**
+Node.js (Next.js app runtime)
+JavaScript (ES modules)
 
----
 
-**DocsBuddy is now ready for production with fully functional lookup features!** 🎉
+
+
+-**Web framework**
+
+Next.js 15.5.2 
+
+
+
+-**UI library**
+  
+React 19.1.0
+React DOM 19.1.0
+
+
+
+-**Styling**
+
+Tailwind CSS 
+
+
+
+-**Linting and Code quality**
+
+ESLint 9 with eslint-config-next 15.5.2 (Flat config via @eslint/eslintrc)
+Markdown linting: markdownlint and markdownlint-cli2
+
+
+
+-**AI and LLM**
+
+OpenAI official SDK openai 
+Models used in code: gpt-4o-mini (via chat completions)
+
+
+
+-**Dictionary API**
+
+https://api.dictionaryapi.dev/
+
+
+
+-**Wikipedia REST API**
+
+https://en.wikipedia.org/api/rest_v1/page/summary/
+
+
+
+## 🌐 **Steps to run this project**
+
+1. git clone https://github.com/angelphoon7/docsbuddy
+
+2. cd docsbuddy
+
+3. npm install
+
+4. insert .env file with openai API key
+
+5. npm install openai
+
+6. npm run dev
+
+
+
