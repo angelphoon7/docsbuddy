@@ -44,6 +44,8 @@ This project uses:
 
 
 -**Languages/Runtime**
+
+
 Node.js (Next.js app runtime)
 JavaScript (ES modules)
 
